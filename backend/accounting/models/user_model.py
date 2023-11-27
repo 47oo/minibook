@@ -10,5 +10,3 @@ class User(Base):
     username = Column(String, unique=True, index=True, nullable=False)
     password = Column(String, nullable=False)
     nickname = Column(String, index=True, nullable=False)
-
-
