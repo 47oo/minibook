@@ -1,4 +1,7 @@
 from models.base import Base
+from models.user_model import User
+from models.bill_model import Bill
+from models.keyword_mapping_model import KeywordMapping
 from config.minibook import mini_book
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker

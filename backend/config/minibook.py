@@ -18,5 +18,5 @@ class MiniBook:
 
         return absolute_path
 
-mini_book = MiniBook("minibook.db")
+mini_book = MiniBook("minibook.sqlite")
 
