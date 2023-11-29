@@ -1,15 +1,32 @@
 from sqlalchemy.orm import Session
+from typing import List
 from models.keyword_mapping_model import KeywordMapping
 
 
-def create_keyword_mapping(session: Session, keyword: str, transaction_type: str, transaction_category: str, user_id: int):
+def create_keyword_mapping(session: Session, km: KeywordMapping):
     """
     创建一个新的关键字映射记录。
     """
-    new_keyword_mapping = KeywordMapping(keyword=keyword, transaction_type=transaction_type, transaction_category=transaction_category, user_id=user_id)
-    session.add(new_keyword_mapping)
+    session.add(km)
     session.commit()
-    return new_keyword_mapping
+def create_keyword_mappings(session: Session, kms: List[KeywordMapping]):
+    """
+    创建一个新的关键字映射记录。
+    """
+    for km in kms:
+        session.add(km)
+    session.commit()
+
+def get_keyword_mapping2dict(session: Session):
+    kwsdict = {}
+    kws = session.query(KeywordMapping).all()
+    for kw in kws:
+        kwsdict[kw.keyword] ={
+            "transaction_type": kw.transaction_type,
+            "transaction_category": kw.transaction_category,
+        }
+    return kwsdict
+
 
 def get_keyword_mapping_by_id(session: Session, keyword_mapping_id: int):
     """
@@ -51,7 +68,7 @@ def init_data(session: Session):
             "user_id": 0
         },
         {
-            "keyword": "餐饮",
+            "keyword": "餐厅",
             "transaction_type": "餐饮",
             "transaction_category": "支出",
             "user_id": 0
@@ -94,6 +111,12 @@ def init_data(session: Session):
         },
         {
             "keyword": "收钱码",
+            "transaction_type": "餐饮",
+            "transaction_category": "支出",
+            "user_id": 0
+        },
+        {
+            "keyword": "肉饼",
             "transaction_type": "餐饮",
             "transaction_category": "支出",
             "user_id": 0

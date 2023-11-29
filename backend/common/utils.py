@@ -1,7 +1,12 @@
 import pyzipper
 import os
 import csv
+import re
 import chardet
+from datetime import datetime
+from db.database import SessionLocal
+from models.bill_model import Bill
+from repositories.keyword_repository import get_keyword_mapping2dict,init_data
 
 def detect_file_encoding(file_path):
     """
@@ -73,10 +78,28 @@ def wechatbill(file_path):
     data = _read_csv_with_header(file_path,'交易时间')
     return data[1:]
 
-# 示例用法
-csv_file_path = '/mnt/c/Users/13669/Downloads/alipay_record_20231127_092126.csv'
-header_keyword = '交易时间'
-csv_data = _read_csv_with_header(csv_file_path, header_keyword)
-
-for row in csv_data[1:]:
-    print(row)
+def createbills(file_path,bill_type):
+    with SessionLocal() as session:
+        kwsdict = get_keyword_mapping2dict(session)
+        bills = []
+        if bill_type == 'alipay':
+            csv_data = alipaybill(file_path)
+            for line in csv_data:
+                bill = Bill(transaction_time = datetime.strptime(line[0],"%Y/%m/%d %H:%M"),
+                            transaction_type = line[1],
+                            counterparty = line[2],
+                            description = line[4],
+                            transaction_category = line[5],
+                            transaction_amount = line[6],
+                            funding_source = line[7],
+                            user_id = 1)  
+                for keyword in kwsdict.keys():
+                    if keyword in bill.description or keyword in bill.counterparty:
+                        bill.transaction_type = kwsdict[keyword]['transaction_type']
+                        bill.transaction_category = kwsdict[keyword]['transaction_category']
+                        break
+                bills.append(bill)
+        elif bill_type == 'wechat':
+            csv_data = wechatbill(file_path)
+        session.add_all(bills)
+        session.commit()
