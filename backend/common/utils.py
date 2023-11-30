@@ -3,6 +3,7 @@ import os
 import csv
 import re
 import chardet
+import locale
 from datetime import datetime
 from db.database import SessionLocal
 from models.bill_model import Bill
@@ -66,6 +67,7 @@ def _read_csv_with_header(file_path, header_keyword):
             next(csv_reader)
 
         # 读取剩余的数据
+        locale.setlocale(locale.LC_ALL, '')
         data = [row for row in csv_reader]
 
     return data
@@ -76,10 +78,14 @@ def alipaybill(file_path):
 
 def wechatbill(file_path):
     data = _read_csv_with_header(file_path,'交易时间')
+    for d in data[1:]:
+        d[5] = locale.atof(d[5].strip('¥').replace(',', ''))
     return data[1:]
 
-def createbills(file_path,bill_type):
+def createbills(file_path,bill_type,user_id):
+    fname = os.path.basename(file_path)
     with SessionLocal() as session:
+        init_data(session)
         kwsdict = get_keyword_mapping2dict(session)
         bills = []
         if bill_type == 'alipay':
@@ -92,7 +98,10 @@ def createbills(file_path,bill_type):
                             transaction_category = line[5],
                             transaction_amount = line[6],
                             funding_source = line[7],
-                            user_id = 1)  
+                            pay_state = line[8],
+                            user_id = user_id,
+                            bill_type = bill_type,
+                            csv_fname = fname)  
                 for keyword in kwsdict.keys():
                     if keyword in bill.description or keyword in bill.counterparty:
                         bill.transaction_type = kwsdict[keyword]['transaction_type']
@@ -101,5 +110,23 @@ def createbills(file_path,bill_type):
                 bills.append(bill)
         elif bill_type == 'wechat':
             csv_data = wechatbill(file_path)
+            for line in csv_data:
+                bill = Bill(transaction_time = datetime.strptime(line[0],"%Y-%m-%d %H:%M:%S"),
+                            transaction_type = line[1],
+                            counterparty = line[2],
+                            description = line[3],
+                            transaction_category = line[4],
+                            transaction_amount = line[5],
+                            funding_source = line[6],
+                            pay_state = line[7],
+                            user_id = user_id,
+                            bill_type = bill_type,
+                            csv_fname = fname)  
+                for keyword in kwsdict.keys():
+                    if keyword in bill.description or keyword in bill.counterparty:
+                        bill.transaction_type = kwsdict[keyword]['transaction_type']
+                        bill.transaction_category = kwsdict[keyword]['transaction_category']
+                        break
+                bills.append(bill)
         session.add_all(bills)
         session.commit()
