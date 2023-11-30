@@ -1,7 +1,6 @@
 import pyzipper
 import os
 import csv
-import re
 import chardet
 import locale
 from datetime import datetime

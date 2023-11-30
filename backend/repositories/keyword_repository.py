@@ -98,6 +98,12 @@ def init_data(session: Session):
             "user_id": 0
         },
         {
+            "keyword": "话费",
+            "transaction_type": "话费",
+            "transaction_category": "支出",
+            "user_id": 0
+        },
+        {
             "keyword": "充值",
             "transaction_type": "娱乐",
             "transaction_category": "支出",
